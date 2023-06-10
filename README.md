@@ -9,11 +9,14 @@ find . -path ./.git -prune -o -print -exec sed -E -i.bak 's/go-cli-template/go-c
 find . -name "*.bak" -type f -delete
 ```
 
+**NOTE:** 
+goreleaser requires a personal access token to publish a homebrew formula to a tap in another repo since github action token are only valid for the repo it's running in. The personal access token should be named `MY_GITHUB_TOKEN` and have `repo` permissions.
+
 Below is an example starting point for a README.
 
 # go-cli-template
 
-<DESCRIPTION>
+DESCRIPTION HERE
 
 ## Usage:
 
@@ -62,4 +65,4 @@ chmod +x go-cli-template
 
 ## Examples: 
 
-<INSERT EXAMPLES>
+EXAMPLES HERE
