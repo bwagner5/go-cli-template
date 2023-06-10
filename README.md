@@ -2,10 +2,11 @@
 
 go-cli-template provides a scaffold for a go CLI. It currently utilizes cobra and takes opinions on what github workflows exist and do as well as the Makefile including dev tooling like golangci and goreleaser.
 
-You can run the following command to replace occurrences of `go-cli-template` with whatever your CLI is called:
+You can run the following commands to replace occurrences of `go-cli-template` with whatever your CLI is called:
 
 ```
-
+find . -path ./.git -prune -o -print -exec sed -E -i.bak 's/go-cli-template/go-cli-template/g' {} \;
+find . -name "*.bak" -type f -delete
 ```
 
 Below is an example starting point for a README.
