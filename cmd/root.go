@@ -15,12 +15,24 @@ limitations under the License.
 package main
 
 import (
+	"bytes"
+	"encoding/json"
+	"fmt"
 	"os"
+	"reflect"
+	"strings"
 
 	"github.com/imdario/mergo"
+	"github.com/olekukonko/tablewriter"
 	"github.com/samber/lo"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
+)
+
+const (
+	OutputYAML       = "yaml"
+	OutputTableShort = "short"
+	OutputTableWide  = "wide"
 )
 
 var (
@@ -30,6 +42,7 @@ var (
 type GlobalOptions struct {
 	Verbose    bool
 	Version    bool
+	Output     string
 	ConfigFile string
 }
 
@@ -44,6 +57,8 @@ var (
 func main() {
 	rootCmd.PersistentFlags().BoolVar(&globalOpts.Verbose, "verbose", false, "Verbose output")
 	rootCmd.PersistentFlags().BoolVar(&globalOpts.Version, "version", false, "version")
+	rootCmd.PersistentFlags().StringVarP(&globalOpts.Output, "output", "o", OutputTableShort,
+		fmt.Sprintf("Output mode: %v", []string{OutputTableShort, OutputTableWide, OutputYAML}))
 	rootCmd.PersistentFlags().StringVarP(&globalOpts.ConfigFile, "file", "f", "", "YAML Config File")
 
 	rootCmd.AddCommand(&cobra.Command{Use: "completion", Hidden: true})
@@ -68,4 +83,56 @@ func ParseConfig[T any](globalOpts GlobalOptions, opts T) (T, error) {
 		return opts, err
 	}
 	return opts, nil
+}
+
+func PrettyEncode(data any) string {
+	var buffer bytes.Buffer
+	enc := json.NewEncoder(&buffer)
+	enc.SetIndent("", "    ")
+	if err := enc.Encode(data); err != nil {
+		panic(err)
+	}
+	return buffer.String()
+}
+
+func PrettyTable[T any](data []T, wide bool) string {
+	var headers []string
+	var rows [][]string
+	for _, dataRow := range data {
+		var row []string
+		// clear headers each time so we only keep one set
+		headers = []string{}
+		reflectStruct := reflect.Indirect(reflect.ValueOf(dataRow))
+		for i := 0; i < reflectStruct.NumField(); i++ {
+			typeField := reflectStruct.Type().Field(i)
+			tag := typeField.Tag.Get("table")
+			if tag == "" {
+				continue
+			}
+			subtags := strings.Split(tag, ",")
+			if len(subtags) > 1 && subtags[1] == "wide" && !wide {
+				continue
+			}
+			headers = append(headers, subtags[0])
+			row = append(row, reflect.ValueOf(dataRow).Field(i).String())
+		}
+		rows = append(rows, row)
+	}
+	out := bytes.Buffer{}
+	table := tablewriter.NewWriter(&out)
+	table.SetHeader(headers)
+	table.SetAutoWrapText(false)
+	table.SetAutoFormatHeaders(true)
+	table.SetHeaderAlignment(tablewriter.ALIGN_LEFT)
+	table.SetAlignment(tablewriter.ALIGN_LEFT)
+	table.SetCenterSeparator("")
+	table.SetColumnSeparator("")
+	table.SetRowSeparator("")
+	table.SetHeaderLine(false)
+	table.SetBorder(false)
+	table.SetTablePadding("\t") // pad with tabs
+	table.SetNoWhiteSpace(true)
+	table.AppendBulk(rows) // Add Bulk Data
+	table.Render()
+	return out.String()
 }
