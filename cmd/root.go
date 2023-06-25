@@ -16,6 +16,7 @@ package main
 
 import (
 	"bytes"
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -46,15 +47,31 @@ type GlobalOptions struct {
 	ConfigFile string
 }
 
+type RootOptions struct {
+	Attribution bool
+}
+
 var (
 	globalOpts = GlobalOptions{}
+	rootOpts   = RootOptions{}
 	rootCmd    = &cobra.Command{
 		Use:     "go-cli-template",
 		Version: version,
+		Run: func(cmd *cobra.Command, args []string) {
+			if rootOpts.Attribution {
+				fmt.Println(attribution)
+				os.Exit(0)
+			}
+		},
 	}
 )
 
+//go:generate cp -r ../ATTRIBUTION.md ./
+//go:embed ATTRIBUTION.md
+var attribution string
+
 func main() {
+	rootCmd.Flags().BoolVar(&rootOpts.Attribution, "attribution", false, "show attributions")
 	rootCmd.PersistentFlags().BoolVar(&globalOpts.Verbose, "verbose", false, "Verbose output")
 	rootCmd.PersistentFlags().BoolVar(&globalOpts.Version, "version", false, "version")
 	rootCmd.PersistentFlags().StringVarP(&globalOpts.Output, "output", "o", OutputTableShort,

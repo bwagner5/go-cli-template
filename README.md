@@ -5,7 +5,7 @@ go-cli-template provides a scaffold for a go CLI. It currently utilizes cobra an
 You can run the following commands to replace occurrences of `go-cli-template` with whatever your CLI is called:
 
 ```
-find . -path ./.git -prune -o -print -exec sed -E -i.bak 's/go-cli-template/go-cli-template/g' {} \;
+find . -path ./.git -prune -o -print -exec sed -E -i.bak 's/go-cli-template/<FILL IN CLI NAME>/g' {} \;
 find . -name "*.bak" -type f -delete
 ```
 
